@@ -1,101 +1,125 @@
-import Image from "next/image";
+"use client";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox"
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Building2 } from "lucide-react";
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { loginSchema } from "@/lib/schema/zod";
+import { Spinner } from "@/components/ui/spinner";
+import AuthService from "@/lib/services/authService";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import Registro from "@/components/registro/registro";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [loading, setLoading] = useState(false);
+  const [registro, setRegistro] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const data = async (data) => {
+    setLoading(true);
+    const authService = new AuthService();
+    const response = await authService.Login(data);
+    if (!response) {
+      setLoading(false);
+      return toast({
+        title: "Erro",
+        description: "E-mail ou senha inválidos",
+        variant: "destructive"
+      });
+    }
+    document.cookie = `token=${response.token}`;
+    toast({
+      title: "Sucesso",
+      description: "Usuário autenticado com sucesso",
+    });
+    setLoading(false);
+    router.push("/admin");
+  }
+
+  const handleRegistro = () => {
+    setRegistro(true);
+  }
+
+
+  return (
+    <div className="h-screen flex justify-center items-center">
+      <div className="w-full max-w-md">
+        <CardHeader>
+          <div className="flex justify-center">
+            <div className="bg-green-100 p-3 rounded-full">
+              <Building2 className="h-8 w-8 text-green-600" />
+            </div>
+          </div>
+        </CardHeader>
+        <CardTitle className="flex justify-center items-center">
+          <h2 className=" text-3xl font-extrabold text-gray-900">AgroSystem</h2>
+        </CardTitle>
+        <CardDescription className="flex justify-center items-center">
+          <p className="mt-2 text-sm text-gray-600">
+            {registro ? "Preencha seus dados para criar um conta" : "Entre com suas credenciais para acessar o sistema"}
+          </p>
+        </CardDescription>
+        {registro ? (
+          <Registro setRegistro={setRegistro} />
+        ) : (
+          <>
+            <CardContent className="mt-6">
+              <form onSubmit={handleSubmit(data)} className="space-y-4">
+                <div>
+                  <div>
+                    <Label>E-mail</Label>
+                    <Input
+                      className="mt-1 block w-full px-3 py-2"
+                      type="email"
+                      placeholder="seu@email.com"
+                      {...register("email")}
+                    />
+                    {errors.email && (<p className="text-red-500 text-sm">*{errors.email.message}</p>)}
+                  </div>
+                  <div>
+                    <Label>Senha</Label>
+                    <Input
+                      className="mt-1 block w-full px-3 py-2"
+                      type="password"
+                      placeholder="••••••••"
+                      {...register("password")}
+                    />
+                    {errors.password && (<p className="text-red-500 text-sm">*{errors.password.message}</p>)}
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-between items-center">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="terms" />
+                    <Label htmlFor="terms" className="ml-2 text-sm text-gray-600">Lembrar-me</Label>
+                  </div>
+                  <a href="#" className="text-sm text-primary">Esqueceu sua senha?</a>
+                </div>
+                <div>
+                  <Button type="submit" disabled={loading} className="mt-4 w-full">
+                    {loading ? <Spinner size="small" /> : "Entrar"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+            <CardFooter className="flex justify-center">
+              <p className="mt-4 text-sm text-gray-600">
+                Não tem uma conta? <Button variant="line" onClick={handleRegistro} className="text-primary">Registre-se</Button>
+              </p>
+            </CardFooter>
+          </>
+        )}
+      </div>
+    </div >
   );
 }
