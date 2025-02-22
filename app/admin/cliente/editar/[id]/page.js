@@ -23,8 +23,15 @@ export default function Cliente({ params }) {
 
     const onSubmit = async (data) => {
         setLoading(true);
+        data.cep = data.cep.replace(/\D/g, "");
+        data.cpf = data.cpf.replace(/\D/g, "");
+        data.telefone = data.telefone.replace(/\D/g, "");
+        const obj = {
+            id: id,
+            ...data
+        }
         const clienteService = new ClienteService();
-        const cliente = await clienteService.AtualizarCliente(data);
+        const cliente = await clienteService.AtualizarCliente(obj);
         if (!cliente) {
             setLoading(false);
             return toast({
@@ -42,7 +49,7 @@ export default function Cliente({ params }) {
         setLoading(false);
     };
 
-    const fetchClientes = async () => {
+    const fetchCliente = async () => {
         setLoading(true);
         const clienteService = new ClienteService();
         const cliente = await clienteService.ObterCliente(id);
@@ -59,7 +66,7 @@ export default function Cliente({ params }) {
     }
 
     useEffect(() => {
-        fetchClientes();
+        fetchCliente();
     }, [])
 
     return (

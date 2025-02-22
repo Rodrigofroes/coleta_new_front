@@ -25,6 +25,9 @@ export default function Cliente() {
     const onSubmit = async (data) => {
         setLoading(true);
         const clienteService = new ClienteService();
+        data.cep = data.cep.replace(/\D/g, "");
+        data.cpf = data.cpf.replace(/\D/g, "");
+        data.telefone = data.telefone.replace(/\D/g, "");
         const cliente = await clienteService.CadastrarCliente(data);
         if (!cliente) {
             setLoading(false);

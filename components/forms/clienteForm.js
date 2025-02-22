@@ -2,17 +2,19 @@ import { Label } from "@radix-ui/react-label";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Controller } from "react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import CepAdapter from "@/lib/adapter/cep";
+import { maskCep, maskCpf, maskPhone } from "@/lib/mask";
 
 export default function ClienteForm({ control, register, errors, cliente, setValue }) {
-
+    const [cep, setCep] = useState({});
     useEffect(() => {
         if (cliente) {
             setValue("nome", cliente.nome);
-            setValue("cpf", cliente.cpf);
-            setValue("telefone", cliente.telefone);
+            setValue("cpf", maskCpf(cliente.cpf));
+            setValue("telefone", maskPhone(cliente.telefone));
             setValue("email", cliente.email);
-            setValue("cep", cliente.cep);
+            setValue("cep", maskCep(cliente.cep));
             setValue("endereco", cliente.endereco);
             setValue("cidade", cliente.cidade);
             setValue("estado", cliente.estado);
@@ -22,6 +24,19 @@ export default function ClienteForm({ control, register, errors, cliente, setVal
     const ufs = [
         'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
     ];
+
+    const buscarCep = async (data) => {
+        const cepAdapter = new CepAdapter();
+        const buscarcep = await cepAdapter.buscarCep(data);
+        if (!buscarcep) {
+            return;
+        }
+        setCep(buscarcep);
+        setValue("endereco", buscarcep.logradouro);
+        setValue("cidade", buscarcep.localidade);
+        setValue("estado", buscarcep.uf);
+    }
+
     return (
         <div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -42,8 +57,9 @@ export default function ClienteForm({ control, register, errors, cliente, setVal
                         type="text"
                         {...register("cpf")}
                         placeholder="000.000.000-00"
+                        onChange={(e) => setValue("cpf", maskCpf(e.target.value))}
                     />
-                    {errors.cnpj && (<p className="text-red-500 text-sm">*{errors.cnpj.message}</p>)}
+                    {errors.cpf && (<p className="text-red-500 text-sm">*{errors.cpf.message}</p>)}
                 </div>
             </div>
 
@@ -54,7 +70,8 @@ export default function ClienteForm({ control, register, errors, cliente, setVal
                         id="telefone"
                         type="text"
                         {...register("telefone")}
-                        placeholder="+55 (00) 00000-0000"
+                        placeholder="(00) 00000-0000"
+                        onChange={(e) => setValue("telefone", maskPhone(e.target.value))}
                     />
                     {errors.telefone && (<p className="text-red-500 text-sm">*{errors.telefone.message}</p>)}
                 </div>
@@ -78,6 +95,8 @@ export default function ClienteForm({ control, register, errors, cliente, setVal
                         type="text"
                         {...register("cep")}
                         placeholder="00000-000"
+                        onBlur={(e) => buscarCep(e.target.value)}
+                        onChange={(e) => setValue("cep", maskCep(e.target.value))}
                     />
                     {errors.cep && (<p className="text-red-500 text-sm">*{errors.cep.message}</p>)}
                 </div>

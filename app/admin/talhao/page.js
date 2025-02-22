@@ -6,18 +6,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertDialogUI } from "@/components/alertDialog";
-import ClienteService from "@/lib/services/clienteService";
 import { useEffect } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
 import { PaginationUI } from "@/components/pagination";
-import { maskCep, maskCpf, maskPhone } from "@/lib/mask";
-import { set } from "date-fns";
+import SafraService from "@/lib/services/safraService";
+import TalhaoService from "@/lib/services/talhaoService";
 
-export default function Cliente() {
+export default function Talhao() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [clientes, setClientes] = useState([]);
+    const [fazenda, setFazenda] = useState([]);
     const { toast } = useToast();
     const [showDialog, setShowDialog] = useState(false);
     const [confirmCallback, setConfirmCallback] = useState(null);
@@ -26,23 +25,19 @@ export default function Cliente() {
     const currentPage = Number(searchParams.get("page")) || 1
 
     const columns = [
-        { headerName: "Nome", field: "nome" },
-        { headerName: "CPF", field: "cpf", renderCell: (params) => maskCpf(params.row.cpf) },
-        { headerName: "Telefone", field: "telefone", renderCell: (params) => maskPhone(params.row.telefone) },
-        { headerName: "E-mail", field: "email" },
-        { headerName: "CEP", field: "cep", renderCell: (params) => maskCep(params.row.cep) },
-        { headerName: "Endereco", field: "endereco", },
-        { headerName: "Cidade", field: "cidade", },
-        { headerName: "Estado", field: "estado", },
+        { headerName: "Fazenda", field: "fazenda", renderCell: (params) => params.row.fazenda.nome },
+        { headerName: "Cliente", field: "cliente", renderCell: (params) => params.row.cliente.nome },
+        { headerName: "Cultura", field: "cultura", renderCell: (params) => params.row.cultura },
+        { headerName: "Variedade", field: "variedade", renderCell: (params) => params.row.variedade },
         {
             headerName: "Ações",
             field: "acoes",
             renderCell: (params) => (
                 <div className="flex justify-center gap-3">
-                    <Button size="sm" onClick={() => editarCliente(params.row.id)}>
+                    <Button size="sm" onClick={() => editarFazenda(params.row.id)}>
                         <Pencil className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" onClick={() => deletarCliente(params.row.id)}>
+                    <Button size="sm" onClick={() => deletarFazenda(params.row.id)}>
                         <Trash2 className="w-4 h-4" />
                     </Button>
                 </div>
@@ -50,51 +45,50 @@ export default function Cliente() {
         },
     ];
 
-    const editarCliente = (id) => {
-        router.push(`/admin/cliente/editar/${id}`);
+    const editarFazenda = (id) => {
+        router.push(`/admin/safra/editar/${id}`);
     };
 
-    const deletarCliente = async (id) => {
+    const deletarFazenda = async (id) => {
         setShowDialog(true);
         setConfirmCallback(() => async () => {
             setLoading(true);
-            const clienteService = new ClienteService();
-            const deletar = await clienteService.DeletarCliente(id);
+            const safraService = new SafraService();
+            const deletar = await safraService.DeletarSafra(id);
             if (!deletar) {
-                setShowDialog(false);
                 setLoading(false);
+                setShowDialog(false);
                 return toast({
                     title: "Erro",
-                    description: "Erro ao deletar cliente",
+                    description: "Erro ao deletar safra",
                     variant: "destructive",
                 });
             }
 
             toast({
                 title: "Sucesso",
-                description: "Cliente deletado com sucesso",
+                description: "Safra deletado com sucesso",
             });
             setShowDialog(false);
             setLoading(false);
-            fetchClientes();
+            fetchSafra();
         });
     };
 
-
-    const fetchClientes = async (page) => {
+    const fetchSafra = async (page) => {
         setLoading(true);
-        const clienteService = new ClienteService();
-        const clientes = await clienteService.ListarClientes(page);
-        if (!clientes) {
+        const talhaoService = new TalhaoService();
+        const talhao = await talhaoService.ListarTalhao(page);
+        if (!talhao) {
             setLoading(false);
             return toast({
                 title: "Erro",
-                description: "Erro ao buscar clientes",
+                description: "Erro ao buscar talhao",
                 variant: "destructive"
             });
         }
-        setClientes(clientes.items);
-        setTotalPage(clientes.totalPages);
+        setFazenda(talhao.items);
+        setTotalPage(talhao.totalPages)
         setLoading(false);
     };
 
@@ -105,26 +99,26 @@ export default function Cliente() {
     }, []);
 
     useEffect(() => {
-        fetchClientes(searchParams)
-    }, [currentPage]);
+        fetchSafra(searchParams)
+    }, [currentPage, searchParams]);
 
     return (
         <div className="container  max-w-full justify-center items-center mx-auto p-6">
             <AlertDialogUI
                 title="Confirmação de exclusão"
-                description="Deseja realmente deletar este cliente?"
+                description="Deseja realmente deletar esta safra?"
                 showDialog={showDialog}
                 setShowDialog={setShowDialog}
                 onConfirm={confirmCallback}
             />
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <h1 className="mt-4 text-3xl font-bold">Clientes</h1>
-                    <p className="text-muted-foreground">Lista de clientes cadastrados</p>
+                    <h1 className="mt-4 text-3xl font-bold">Talhões</h1>
+                    <p className="text-muted-foreground">Lista de talhões cadastradas</p>
                 </div>
                 <div className="flex flex-row justify-center items-center gap-2">
-                    <Link className="flex items-center justify-center" href="/admin/cliente/novo">
-                        <Button className="px-4">Novo Cliente</Button>
+                    <Link className="flex items-center justify-center" href="/admin/talhao/novo">
+                        <Button className="px-4">Novo Talhão</Button>
                     </Link>
                 </div>
             </div>
@@ -134,10 +128,10 @@ export default function Cliente() {
                 </div>
             ) : (
                 <>
-                    <Tables data={clientes} columns={columns} />
+                    <Tables data={fazenda} columns={columns} />
                     <div className="mt-4 flex justify-end items-center">
                         <PaginationUI
-                            totalPage={totalPage}
+                            totalPage={1}
                         />
                     </div>
                 </>

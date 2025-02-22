@@ -76,7 +76,7 @@ function SidebarContent({
             </ScrollArea>
             <div className="mt-auto p-4 border-t">
                 <Button
-                    variant="line"
+                    
                     className="w-full justify-start"
                     onClick={onLogout}
                 >
