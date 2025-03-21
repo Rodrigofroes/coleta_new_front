@@ -1,7 +1,7 @@
 "use client";
 import Back from "@/components/back";
 import FazendaForm from "@/components/forms/fazendaForm";
-import Map from "@/components/map";
+import Map from "@/components/maps/map";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";

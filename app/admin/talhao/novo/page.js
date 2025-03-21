@@ -1,115 +1,97 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import ClienteService from "@/lib/services/clienteService";
+import FazendaService from "@/lib/services/fazendaService";
+import TalhaoService from "@/lib/services/talhaoService";
+import TalhaoFormContainer from "@/components/forms/TalhaoFormContainer";
+import Back from "@/components/back";
+import { ArrowLeft } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
-const PlotForm = () => {
-  const mapContainerRef = useRef(null);
-  const [polygons, setPolygons] = useState([]); // Armazenar múltiplos polígonos
-  const [map, setMap] = useState(null);
-  const [drawingManager, setDrawingManager] = useState(null);
+export default function Talhao() {
+  const [clientes, setClientes] = useState([]);
+  const [fazendas, setFazendas] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const fetchClientes = async () => {
+    const clienteService = new ClienteService();
+    const clientes = await clienteService.ListarTodosClientes();
+    if (!clientes) {
+      return toast({
+        title: "Erro",
+        description: "Erro ao listar clientes",
+        variant: "destructive"
+      });
+    }
+    setClientes(clientes);
+  };
+
+  const fetchFazendas = async () => {
+    const fazendaService = new FazendaService();
+    const fazendas = await fazendaService.ListarTodasFazendas();
+    if (!fazendas) {
+      return toast({
+        title: "Erro",
+        description: "Erro ao listar fazendas",
+        variant: "destructive"
+      });
+    }
+    setFazendas(fazendas);
+  };
 
   useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (!window.google) return;
-
-      const newMap = new window.google.maps.Map(mapContainerRef.current, {
-        center: { lat: -23.55052, lng: -46.633308 },
-        zoom: 10,
-        mapTypeId: "satellite",
-      });
-
-      const newDrawingManager = new window.google.maps.drawing.DrawingManager({
-        drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
-        drawingControl: true,
-        drawingControlOptions: {
-          position: window.google.maps.ControlPosition.TOP_CENTER,
-          drawingModes: ["polygon"],
-        },
-        polygonOptions: {
-          editable: true,
-          draggable: true,
-        },
-      });
-
-      newDrawingManager.setMap(newMap);
-      setMap(newMap);
-      setDrawingManager(newDrawingManager);
-
-      window.google.maps.event.addListener(newDrawingManager, "overlaycomplete", (event) => {
-        const newPolygon = event.overlay;
-        // Remover a linha com handleSelectPolygon
-        newPolygon.addListener("set_at", () => handleEditPolygon(newPolygon)); // Evento de edição (quando o vértice é movido)
-        newPolygon.addListener("insert_at", () => handleEditPolygon(newPolygon)); // Evento de edição (quando um novo vértice é adicionado)
-
-        setPolygons((prevPolygons) => [
-          ...prevPolygons,
-          { polygon: newPolygon, area: getArea(newPolygon) }, // Armazena o polígono e sua área
-        ]);
-      });
-    };
-
-    if (!window.google) {
-      const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyD6Cry2XHdEycsrOW1othM2LbNIGEk5TyA&libraries=drawing,geometry`;
-      script.async = true;
-      script.onload = loadGoogleMaps;
-      document.body.appendChild(script);
-    } else {
-      loadGoogleMaps();
-    }
+    fetchClientes();
+    fetchFazendas();
   }, []);
 
-  const getArea = (polygon) => {
-    const path = polygon.getPath().getArray();
-    const areaInSqMeters = window.google.maps.geometry.spherical.computeArea(path);
-    const areaInHectares = areaInSqMeters / 10000; // Converte de metros quadrados para hectares
-    return Math.round(areaInHectares * 100) / 100; // Retorna a área em hectares com 2 casas decimais
-  };
-
-  const handleEditPolygon = (polygon) => {
-    // Recalcula a área após edição do polígono
-    const newArea = getArea(polygon);
-    setPolygons((prevPolygons) => {
-      const updatedPolygons = prevPolygons.map((item) =>
-        item.polygon === polygon ? { ...item, area: newArea } : item
-      );
-      return updatedPolygons;
+  const onSubmit = async (data) => {
+    setLoading(true);
+    const talhaoService = new TalhaoService();
+    const cadastrar = await talhaoService.CadastrarTalhao(data);
+    if (!cadastrar) {
+      setLoadingFazendas(false);
+      return toast({
+        title: "Erro",
+        description: "Erro ao cadastrar talhão",
+        variant: "destructive"
+      });
+    }
+    toast({
+      title: "Sucesso",
+      description: "Talhão cadastrado com sucesso",
+      variant: "success"
     });
-  };
-
-  const handleDeletePolygon = (polygonToDelete) => {
-    // Remove o polígono do mapa e do estado
-    polygonToDelete.setMap(null);
-    setPolygons(polygons.filter(({ polygon }) => polygon !== polygonToDelete));
+    setLoading(false);
+    router.push("/admin/talhao");
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      <div style={{ width: "30%", padding: 20, backgroundColor: "#f9f9f9" }}>
-        <h2>Cadastro de Talhão</h2>
-        <div>
-          {polygons.length > 0 ? (
-            polygons.map((item, index) => (
-              <div key={index} style={{ marginBottom: "10px" }}>
-                <p>
-                  {index + 1}° Talhão - {item.area} hectares
-                  <button
-                    type="button"
-                    onClick={() => handleDeletePolygon(item.polygon)}
-                    style={{ marginLeft: "10px", color: "red" }}
-                  >
-                    Excluir
-                  </button>
-                </p>
-              </div>
-            ))
-          ) : (
-            <p>Nenhum talhão desenhado ainda.</p>
-          )}
+    <div className="container max-w-6xl justify-center items-center mx-auto p-6">
+      {loading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+          <Spinner message="carregando..." className="text-white w-10 h-10" />
+        </div>
+      )}
+      <div className="mb-8">
+        <div className="flex items-center gap-2">
+          <Back icon={<ArrowLeft className="h-4 w-4" />} text="Voltar" href="/admin/talhao" />
         </div>
       </div>
-      <div ref={mapContainerRef} style={{ flex: 1, position: "relative" }} />
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="mt-4 text-3xl font-bold">
+            Novo Talhão
+          </h1>
+          <p className="text-muted-foreground">
+            Preencha os campos abaixo para cadastrar um talhão.
+          </p>
+        </div>
+      </div>
+      <TalhaoFormContainer clientes={clientes} fazendas={fazendas} onSubmit={onSubmit} setLoadingFazendas={setLoading} />
     </div>
   );
-};
-
-export default PlotForm;
+}

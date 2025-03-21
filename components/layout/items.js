@@ -7,5 +7,5 @@ export const Items = [
     { title: 'Safras', variant: "default", href: '/admin/safra', icon: Wheat },
     { title: 'Talhões', variant: "default", href: '/admin/talhao', icon: Map },
     { title: 'Funcionários', variant: "default", href: '/admin/funcionario', icon: UserCircle },
-    { title: 'Visualizar Mapa', variant: "default", href: '/admin/viewmap', icon: Map },
+    { title: 'Gerar coleta', variant: "default", href: '/admin/visualizarmapa', icon: Map },
 ];

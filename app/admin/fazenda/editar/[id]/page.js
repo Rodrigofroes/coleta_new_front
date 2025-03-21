@@ -1,7 +1,7 @@
 "use client";
 import Back from "@/components/back";
 import FazendaForm from "@/components/forms/fazendaForm";
-import Map from "@/components/map";
+import Map from "@/components/maps/map";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
@@ -53,28 +53,34 @@ export default function Fazenda({ params }) {
     }
 
     const fetchClientes = async () => {
+        setLoading(true);
         const clienteService = new ClienteService();
         const clientes = await clienteService.ListarTodosClientes();
         if (!clientes) {
+            setLoading(false);
             return toast({
                 title: "Erro",
                 description: "Erro ao listar clientes",
                 variant: "destructive"
             });
         }
+        setLoading(true);
         setClientes(clientes);
     };
 
     const fetchFazenda = async (id) => {
+        setLoading(true);
         const fazendaService = new FazendaService();
         const fazenda = await fazendaService.BuscarFazenda(id);
         if (!fazenda) {
+            setLoading(false);
             return toast({
                 title: "Erro",
                 description: "Erro ao buscar fazenda",
                 variant: "destructive"
             });
         }
+        setLoading(false);
         setFazenda(fazenda);
         setLocation({ lat: fazenda.lat, lng: fazenda.lng });
     }
@@ -101,22 +107,30 @@ export default function Fazenda({ params }) {
                     </p>
                 </div>
             </div>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <FazendaForm
-                    control={control}
-                    register={register}
-                    initialValue={fazenda}
-                    errors={errors}
-                    clientes={clientes}
-                    setValue={setValue}
-                    children={<Map initial={fazenda}
-                        onLocationSelect={setLocation}
-                    />} />
+            {loading ? (
+                <Spinner className="text-black" message="Carregando..." />
+            ) :
+                (
+                    <>
+                        <form onSubmit={handleSubmit(onSubmit)}>
+                            <FazendaForm
+                                control={control}
+                                register={register}
+                                initialValue={fazenda}
+                                errors={errors}
+                                clientes={clientes}
+                                setValue={setValue}
+                                children={
+                                    <Map initial={fazenda}
+                                        onLocationSelect={setLocation}
+                                    />} />
 
-                <Button type="submit" className="mt-4 w-24" disabled={loading}>
-                    {loading ? <Spinner /> : "Cadastrar"}
-                </Button>
-            </form>
-        </div>
+                            <Button type="submit" className="mt-4 w-24" disabled={loading}>
+                                {loading ? <Spinner /> : "Cadastrar"}
+                            </Button>
+                        </form>
+                    </>)
+            }
+        </div >
     );
 }

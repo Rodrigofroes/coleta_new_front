@@ -1,17 +1,15 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import AccordionWithTables from "@/components/accordion/accordion";
 import { AlertDialogUI } from "@/components/alertDialog";
-import { useEffect } from "react";
+import { PaginationUI } from "@/components/pagination";
 import { Spinner } from "@/components/ui/spinner";
 import { useToast } from "@/hooks/use-toast";
-import { PaginationUI } from "@/components/pagination";
 import TalhaoService from "@/lib/services/talhaoService";
-import AccordionWithTables from "@/components/accordion/accordion";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default function Talhao() {
+export default function VisualizarMapa() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [fazenda, setFazenda] = useState([]);
@@ -21,36 +19,6 @@ export default function Talhao() {
     const [totalPage, setTotalPage] = useState(0);
     const [loading, setLoading] = useState(false);
     const currentPage = Number(searchParams.get("page")) || 1
-
-    const editarTalhao = (id) => {
-        router.push(`/admin/talhao/editar/${id}`);
-    };
-
-    const deletar = async (id) => {
-        setShowDialog(true);
-        setConfirmCallback(() => async () => {
-            setLoading(true);
-            const talhaoService = new TalhaoService();
-            const deletar = await talhaoService.DeletarTalhao(id);
-            if (!deletar) {
-                setLoading(false);
-                setShowDialog(false);
-                return toast({
-                    title: "Erro",
-                    description: "Erro ao deletar talhão",
-                    variant: "destructive",
-                });
-            }
-
-            toast({
-                title: "Sucesso",
-                description: "Talhão deletado com sucesso",
-            });
-            setShowDialog(false);
-            setLoading(false);
-            fetchTalhao();
-        });
-    };
 
     const fetchTalhao = async (page) => {
         setLoading(true);
@@ -68,6 +36,36 @@ export default function Talhao() {
         setTotalPage(talhao.totalPages)
         setLoading(false);
     };
+
+        const visualizar = (id) => {
+            router.push(`/admin/visualizarmapa/visualizar/${id}`);
+        };
+    
+        const deletar = async (id) => {
+            setShowDialog(true);
+            setConfirmCallback(() => async () => {
+                setLoading(true);
+                const talhaoService = new TalhaoService();
+                const deletar = await talhaoService.DeletarTalhao(id);
+                if (!deletar) {
+                    setLoading(false);
+                    setShowDialog(false);
+                    return toast({
+                        title: "Erro",
+                        description: "Erro ao deletar talhão",
+                        variant: "destructive",
+                    });
+                }
+    
+                toast({
+                    title: "Sucesso",
+                    description: "Talhão deletado com sucesso",
+                });
+                setShowDialog(false);
+                setLoading(false);
+                fetchTalhao();
+            });
+        };
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -90,13 +88,11 @@ export default function Talhao() {
             />
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <h1 className="mt-4 text-3xl font-bold">Talhões</h1>
-                    <p className="text-muted-foreground">Lista de talhões cadastradas</p>
+                    <h1 className="mt-4 text-3xl font-bold">Visualizar Mapa</h1>
+                    <p className="text-muted-foreground">Lista de mapas cadastradas</p>
                 </div>
                 <div className="flex flex-row justify-center items-center gap-2">
-                    <Link className="flex items-center justify-center" href="/admin/talhao/novo">
-                        <Button className="px-4">Novo Talhão</Button>
-                    </Link>
+                    <Link className="flex items-center justify-center" href="/admin/visualizarmapa/novo" />
                 </div>
             </div>
             {loading ? (
@@ -105,7 +101,7 @@ export default function Talhao() {
                 </div>
             ) : (
                 <>
-                    <AccordionWithTables data={fazenda} editarTalhao={editarTalhao} deletarTalhao={deletar} />
+                    <AccordionWithTables data={fazenda} isVisualizarMapa={true} visualizar={visualizar} />
                     <div className="mt-4 flex justify-end items-center">
                         <PaginationUI
                             totalPage={totalPage}
