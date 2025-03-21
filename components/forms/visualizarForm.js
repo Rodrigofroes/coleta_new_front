@@ -93,7 +93,7 @@ export default function VisualizarForm({ control, register, errors, children, on
                         {errors.tipoColeta && <p className="text-red-500 text-sm">*{errors.tipoColeta.message}</p>}
                     </div>
                     <div>
-                        <Label htmlFor="tipoColeta">Quantidade de Grid</Label>
+                        <Label htmlFor="tipoColeta">Área do grid (ha) </Label>
                         <Input id="quantidade"
                             placeholder="Digite a quantidade"
                             {...register("quantidadeGrid")}

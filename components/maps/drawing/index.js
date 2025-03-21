@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-export default function MapDrawing({ 
-    initialValue, 
-    coordenadas, 
-    noEdit 
+export default function MapDrawing({
+    initialValue,
+    coordenadas,
+    noEdit,
+    onPolygonComplete,
+    onPolygonEdit,
 }) {
     const mapContainerRef = useRef(null);
     const [map, setMap] = useState(null);
@@ -29,7 +31,7 @@ export default function MapDrawing({
 
         if (!window.google) {
             const script = document.createElement("script");
-            script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCTi6KWVtwv58_HaYxb_OrTAa6m3K-A7Ao&libraries=geometry";
+            script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyCTi6KWVtwv58_HaYxb_OrTAa6m3K-A7Ao&libraries=geometry,drawing";
             script.async = true;
             script.onload = loadGoogleMaps;
             document.body.appendChild(script);
@@ -49,7 +51,7 @@ export default function MapDrawing({
 
             // Verifica se é um GeoJSON (hexágonos da API)
             if (initialValue.type === "FeatureCollection" && initialValue.features) {
-                loadedPolygons = initialValue.features.map(feature => {
+                loadedPolygons = initialValue.features.map((feature, index) => {
                     const coordinates = feature.geometry.coordinates[0].map(coord => ({
                         lat: coord[1],
                         lng: coord[0]
@@ -65,6 +67,26 @@ export default function MapDrawing({
                     });
 
                     polygon.setMap(map);
+                    const bounds = new google.maps.LatLngBounds();
+                    coordinates.forEach(coord => bounds.extend(coord));
+                    const center = bounds.getCenter();
+
+                    // Cria um marcador com o índice no centro
+                    new google.maps.Marker({
+                        position: center,
+                        map,
+                        label: {
+                            text: (index + 1).toString(), // gera índices começando em 1
+                            color: "black",
+                            fontSize: "12px",
+                            fontWeight: "bold"
+                        },
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 0, // marcador invisível, só label visível
+                        },
+                    });
+
                     return polygon;
                 });
 
@@ -107,6 +129,47 @@ export default function MapDrawing({
             map.setCenter(coordenadas);
         }
     }, [coordenadas, map]);
+
+
+    // Função para desenhar polígonos
+    useEffect(() => {
+        if (map && window.google?.maps?.drawing) {
+            const drawingManager = new window.google.maps.drawing.DrawingManager({
+                drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: window.google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [window.google.maps.drawing.OverlayType.POLYGON],
+                },
+                polygonOptions: {
+                    editable: !noEdit,
+                    draggable: !noEdit,
+                    fillColor: "transparent",
+                    strokeColor: "hsl(100, 100%, 50%)",
+                    fillOpacity: 0.5,
+                },
+            });
+
+            drawingManager.setMap(map);
+
+            drawingManager.addListener("overlaycomplete", (event) => {
+                if (event.type === "polygon") {
+                    const polygon = event.overlay;
+                    polygon.setMap(map);
+                    const path = polygon.getPath().getArray();
+                    const coordinates = path.map(latLng => ({
+                        lat: latLng.lat(),
+                        lng: latLng.lng(),
+                    }));
+                    onPolygonComplete?.(polygon, coordinates);
+                }
+            });
+
+            return () => {
+                drawingManager.setMap(null);
+            };
+        }
+    }, [map, noEdit, onPolygonComplete]);
 
     return <div ref={mapContainerRef} style={{ height: "500px" }} />;
 }
