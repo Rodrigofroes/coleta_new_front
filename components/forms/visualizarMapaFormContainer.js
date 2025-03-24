@@ -118,7 +118,8 @@ export default function VisualizarMapaFormContainer({ initialValue }) {
   const onSubmit = async (data) => {
     let obj = {
       ...data,
-      Geojson: mapInitialValue
+      geoJson: mapInitialValue,
+      talhaoID: initialValue.talhoes[0].id
     }
     console.log(obj);
   }
