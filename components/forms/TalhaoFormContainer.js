@@ -94,6 +94,7 @@ export default function TalhaoFormContainer({ initialValue, clientes, fazendas, 
                                 onPolygonEdit={handlePolygonEdit}
                                 coordenadas={coordinates}
                                 initialValue={initial}
+                                noEdit={initialValue}
                             />
                         </>
                     }

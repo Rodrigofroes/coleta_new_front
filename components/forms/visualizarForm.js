@@ -42,13 +42,7 @@ const PROFUNDIDADE = [
     { id: "CinquentaASetenta", nome: '50-60 cm' },
 ];
 
-const FUNCIONARIOS = [
-    { id: 'João Silva', nome: 'João Silva' },
-    { id: 'Maria Santos', nome: 'Maria Santos' },
-    { id: 'Pedro Oliveira', nome: 'Pedro Oliveira' },
-];
-
-export default function VisualizarForm({ control, register, errors, children, onChangeColeta, onChangeQuantidade }) {
+export default function VisualizarForm({ control, register, errors, children, onChangeColeta, onChangeQuantidade,funcionarios }) {
     return (
         <div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6">
@@ -179,7 +173,7 @@ export default function VisualizarForm({ control, register, errors, children, on
                                     <SelectValue placeholder="Selecione o funcionário" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {FUNCIONARIOS.map((func) => (
+                                    {funcionarios.map((func) => (
                                         <SelectItem key={func.id} value={func.id}>
                                             {func.nome}
                                         </SelectItem>

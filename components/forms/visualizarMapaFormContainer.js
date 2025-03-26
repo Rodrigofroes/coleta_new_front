@@ -9,6 +9,7 @@ import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 import VisualizarMapaService from "@/lib/services/visualizarMapa";
 import { useToast } from "@/hooks/use-toast";
+import FuncionarioService from "@/lib/services/funcionarioService";
 
 export default function VisualizarMapaFormContainer({ initialValue }) {
   const { toast } = useToast();
@@ -26,6 +27,7 @@ export default function VisualizarMapaFormContainer({ initialValue }) {
   const [quantidade, setQuantidade] = useState(1);
   const [mapInitialValue, setMapInitialValue] = useState({});
   const [loading, setLoading] = useState(false);
+  const [funcionarios, setFuncionarios] = useState([]);
 
   // Nova função para formatar coordenadas
   const transformarCoordenadas = (coordenadas) => {
@@ -109,7 +111,15 @@ export default function VisualizarMapaFormContainer({ initialValue }) {
     }));
   }, [tipoColeta, quantidade]);
 
+  const fecthFuncionarios = async () => {
+    const funcionarioService = new FuncionarioService();
+    const data = await funcionarioService.listarFuncionarios();
+    console.log(data);
+    setFuncionarios(data.items || []);
+  }
+
   useEffect(() => {
+    fecthFuncionarios();  
     if (initialValue) {
       setMapInitialValue(initialValue);
     }
@@ -135,6 +145,7 @@ export default function VisualizarMapaFormContainer({ initialValue }) {
         <VisualizarForm
           control={control}
           register={register}
+          funcionarios={funcionarios}
           errors={errors}
           setValue={setValue}
           defaultValues={initialValue}
